@@ -410,9 +410,7 @@ std::vector<UartDescriptor> UART::EnumerateUarts()
             nullptr
         );
 
-        // Exemple de FriendlyName :
-        // "USB-SERIAL CH340 (COM3)"
-
+        // FriendlyName has the form "USB-SERIAL CH340 (COM3)"
         std::string friendly(desc);
         size_t begin = friendly.find("(COM");
         size_t end   = friendly.find(")");
@@ -421,11 +419,10 @@ std::vector<UartDescriptor> UART::EnumerateUarts()
         {
             UartDescriptor info;
             info.port = friendly.substr(begin + 1, end - begin - 1); // "COM3"
-            info.description = friendly.substr(0, begin - 1);        // description sans "(COMx)"
+            info.description = friendly.substr(0, begin - 1);        // Description without "(COM3)"
             ports.push_back(info);
         }
     }
-
     SetupDiDestroyDeviceInfoList(deviceInfoSet);
 #else
     for (const auto& entry : std::filesystem::directory_iterator("/dev/serial/by-id"))
