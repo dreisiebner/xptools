@@ -2,7 +2,8 @@ add_library(xptools STATIC
 	Socket.cpp
 	UART.cpp
 	HID.cpp
-	TimeUtil.cpp)
+	TimeUtil.cpp
+	StringUtil.cpp)
 
 if(UNIX)
 	include(CheckStructHasMember)
