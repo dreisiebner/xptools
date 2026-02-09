@@ -187,12 +187,15 @@ std::vector<HidDeviceDescriptor> HID::EnumerateDevices()
         HidDeviceDescriptor descriptor;
 		std::wstring manufacturer = std::wstring(cur->manufacturer_string);
 		std::wstring product = std::wstring(cur->product_string);
-		std::wstring serial = std::wstring(cur->serial_number);
-        descriptor.description = WstringToString(manufacturer) + " - " + WstringToString(product);
-        descriptor.vendorId = cur->vendor_id;
-        descriptor.productId = cur->product_id;
-        descriptor.serialNumber = WstringToString(serial);
-        ports.push_back(descriptor);
+		if(!manufacturer.empty() && !product.empty())
+		{	// Filter empty manufacturer or product
+			std::wstring serial = std::wstring(cur->serial_number);
+			descriptor.description = WstringToString(manufacturer) + " - " + WstringToString(product);
+			descriptor.vendorId = cur->vendor_id;
+			descriptor.productId = cur->product_id;
+			descriptor.serialNumber = WstringToString(serial);
+			ports.push_back(descriptor);
+		}
 		cur = cur->next;
 	}
 	hid_free_enumeration(devs);
