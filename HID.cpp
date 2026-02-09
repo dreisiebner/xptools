@@ -179,11 +179,11 @@ int HID::Write(const unsigned char* data, int len)
 std::vector<HidDeviceDescriptor> HID::EnumerateDevices()
 {
     std::vector<HidDeviceDescriptor> ports;
-	// Initialize the hidapi library
+	// Get hid devices from hid library
 	struct hid_device_info* devs = hid_enumerate(0x0, 0x0);
 	struct hid_device_info* cur = devs;
 	while (cur)
-	{
+	{	// Iterate on each device info
         HidDeviceDescriptor descriptor;
 		std::wstring manufacturer = std::wstring(cur->manufacturer_string);
 		std::wstring product = std::wstring(cur->product_string);

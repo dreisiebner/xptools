@@ -41,7 +41,11 @@
 #include <codecvt>
 #endif
 
-// Convert a wide Unicode string to an UTF8 string
+/**
+ * @brief Convert a std::wstring into an std::string
+ * @param wstr the wstring to convert
+ * @return the converted string
+ */
 std::string WstringToString(const std::wstring &wstr)
 {
 #ifdef _WIN32
@@ -57,13 +61,18 @@ std::string WstringToString(const std::wstring &wstr)
 	}
 	return res;
 #else
+    // Linux / macOS
     std::wstring ws(wstr);
     std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
     return conv.to_bytes(ws);
 #endif // _WIN32
 }
 
-// Convert an UTF8 string to a wide Unicode String
+/**
+ * @brief Convert a std::string into an std::wstring
+ * @param wstr the string to convert
+ * @return the converted wstring
+ */
 std::wstring StringToWstring(const std::string &str)
 {
 #ifdef _WIN32
