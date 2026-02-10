@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
 *                                                                                                                      *
-* ANTIKERNEL                                                                                                           *
+* ANTIKERNEL v0.1                                                                                                      *
 *                                                                                                                      *
 * Copyright (c) 2012-2026 Andrew D. Zonenberg and contributors                                                         *
 * All rights reserved.                                                                                                 *
@@ -30,69 +30,66 @@
 /**
 	@file
 	@author Frederic BORRY
-	@brief Declaration of HID transport class
+	@brief Implementation of string utility functions
  */
+#include "StringUtil.h"
 
-#ifndef HID_h
-#define HID_h
-
-#include "../log/log.h"
-#include <string>
-#ifdef __APPLE__
-#include <hidapi.h>
+#ifdef _WIN32
+#include <windows.h>
 #else
-#include <hidapi/hidapi.h>
+#include <locale>
+#include <codecvt>
 #endif
-
-struct HidDeviceDescriptor
-{
-    unsigned short vendorId;
-    unsigned short productId;
-    std::string serialNumber;
-    std::string description;
-};
-
 
 /**
-	@brief Wrapper class for a USB HID connection
+ * @brief Convert a std::wstring into an std::string
+ * @param wstr the wstring to convert
+ * @return the converted string
  */
-class HID
+std::string WstringToString(const std::wstring &wstr)
 {
-public:
-
-	HID();
-	bool Connect(unsigned short vendorId, unsigned short productId, const char* serialNumber = NULL);
-	void Close();
-	virtual ~HID();
-
-	int Read(unsigned char* data, int len);
-	int Write(const unsigned char* data, int len);
-
-	hid_device* GetHandle()
-	{ return m_handle; }
-
-	std::string GetManufacturerName()
-	{ return m_manufacturerName; }
-
-	std::string GetProductName()
-	{ return m_productName; }
-
-	std::string GetSerialNumber()
-	{ return m_serialNumber; }
-
-	bool IsValid() const
+#ifdef _WIN32
+	std::string res;
+	if(!wstr.empty())
 	{
-		return (m_handle != NULL);
+		int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0],(int)wstr.size(), NULL, 0, NULL, NULL);
+		if (size_needed)
+		{
+			res = std::string(size_needed, 0);
+			WideCharToMultiByte (CP_UTF8, 0, &wstr[0],(int)wstr.size(), &res[0], size_needed, NULL, NULL);
+		}
 	}
+	return res;
+#else
+    // Linux / macOS
+    std::wstring ws(wstr);
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+    return conv.to_bytes(ws);
+#endif // _WIN32
+}
 
-static std::vector<HidDeviceDescriptor> EnumerateDevices();
-
-
-protected:
-	hid_device* m_handle;
-	std::string m_manufacturerName;
-	std::string m_productName;
-	std::string m_serialNumber;
-};
-
-#endif
+/**
+ * @brief Convert a std::string into an std::wstring
+ * @param wstr the string to convert
+ * @return the converted wstring
+ */
+std::wstring StringToWstring(const std::string &str)
+{
+#ifdef _WIN32
+	std::wstring res;
+	if( !str.empty())
+	{
+		int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0],(int)str.size(), NULL, 0);
+		if (size_needed)
+		{
+			res = std::wstring(size_needed, 0);
+			MultiByteToWideChar(CP_UTF8, 0, &str[0],(int)str.size(), &res[0], size_needed);
+		}
+	}
+	return res;
+#else
+    // Linux / macOS
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+    return conv.from_bytes(str);
+#endif // _WIN32
+}

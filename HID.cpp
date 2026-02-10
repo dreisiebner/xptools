@@ -2,7 +2,7 @@
 *                                                                                                                      *
 * ANTIKERNEL                                                                                                           *
 *                                                                                                                      *
-* Copyright (c) 2012-2024 Andrew D. Zonenberg                                                                          *
+* Copyright (c) 2012-2026 Andrew D. Zonenberg and contributors                                                         *
 * All rights reserved.                                                                                                 *
 *                                                                                                                      *
 * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the     *
@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <memory.h>
 #include <cstring>
+#include "StringUtil.h"
 
 using namespace std;
 
@@ -173,4 +174,30 @@ int HID::Write(const unsigned char* data, int len)
 		LogError("HID write failed with error %d : %ls\n",x,hid_error(m_handle));
 	}
 	return x;
+}
+
+std::vector<HidDeviceDescriptor> HID::EnumerateDevices()
+{
+    std::vector<HidDeviceDescriptor> ports;
+	// Get hid devices from hid library
+	struct hid_device_info* devs = hid_enumerate(0x0, 0x0);
+	struct hid_device_info* cur = devs;
+	while (cur)
+	{	// Iterate on each device info
+        HidDeviceDescriptor descriptor;
+		std::wstring manufacturer = std::wstring(cur->manufacturer_string);
+		std::wstring product = std::wstring(cur->product_string);
+		if(!manufacturer.empty() && !product.empty())
+		{	// Filter empty manufacturer or product
+			std::wstring serial = std::wstring(cur->serial_number);
+			descriptor.description = WstringToString(manufacturer) + " - " + WstringToString(product);
+			descriptor.vendorId = cur->vendor_id;
+			descriptor.productId = cur->product_id;
+			descriptor.serialNumber = WstringToString(serial);
+			ports.push_back(descriptor);
+		}
+		cur = cur->next;
+	}
+	hid_free_enumeration(devs);
+    return ports;
 }

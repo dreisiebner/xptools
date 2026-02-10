@@ -40,6 +40,7 @@
 #ifndef _WIN32
 #include <fcntl.h>
 #include <unistd.h>
+#include <filesystem>
 
 #ifdef USE_TERMIOS2
 #include <asm/termios.h>
@@ -58,6 +59,8 @@ extern "C" int ioctl (int __fd, unsigned long int __request, ...) __THROW;
 
 #else
 #include <Windows.h>
+#include <setupapi.h>
+#include <devguid.h>
 #endif
 
 using namespace std;
@@ -373,4 +376,62 @@ bool UART::Write(const unsigned char* data, int len)
 			return true;
 		#endif
 	}
+}
+
+std::vector<UartDescriptor> UART::EnumerateUarts()
+{
+    std::vector<UartDescriptor> ports;
+
+#ifdef _WIN32
+    HDEVINFO deviceInfoSet = SetupDiGetClassDevs(
+        &GUID_DEVCLASS_PORTS,
+        nullptr,
+        nullptr,
+        DIGCF_PRESENT
+    );
+
+    if (deviceInfoSet == INVALID_HANDLE_VALUE)
+        return ports;
+
+    SP_DEVINFO_DATA devInfo;
+    devInfo.cbSize = sizeof(SP_DEVINFO_DATA);
+
+    for (DWORD i = 0; SetupDiEnumDeviceInfo(deviceInfoSet, i, &devInfo); i++)
+    {
+        char desc[256] = {0};
+
+        SetupDiGetDeviceRegistryPropertyA(
+            deviceInfoSet,
+            &devInfo,
+            SPDRP_FRIENDLYNAME,
+            nullptr,
+            (PBYTE)desc,
+            sizeof(desc),
+            nullptr
+        );
+
+        // FriendlyName has the form "USB-SERIAL CH340 (COM3)"
+        std::string friendly(desc);
+        size_t begin = friendly.find("(COM");
+        size_t end   = friendly.find(")");
+
+        if (begin != std::string::npos && end != std::string::npos)
+        {
+            UartDescriptor info;
+            info.port = friendly.substr(begin + 1, end - begin - 1); // "COM3"
+            info.description = friendly.substr(0, begin - 1);        // Description without "(COM3)"
+            ports.push_back(info);
+        }
+    }
+    SetupDiDestroyDeviceInfoList(deviceInfoSet);
+#else
+    for (const auto& entry : std::filesystem::directory_iterator("/dev/serial/by-id"))
+    {
+        UartDescriptor info;
+        info.description = entry.path().filename().string();
+        info.port = std::filesystem::read_symlink(entry.path()).string();
+        ports.push_back(info);
+    }
+#endif
+    return ports;
 }

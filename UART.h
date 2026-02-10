@@ -52,6 +52,12 @@ typedef int FILE_DESCRIPTOR;
 
 #endif
 
+struct UartDescriptor
+{
+    std::string port;        // ex: "COM3"
+    std::string description; // ex: "USB-SERIAL CH340"
+};
+
 /**
 	@brief Wrapper class for a serial port
  */
@@ -78,6 +84,8 @@ public:
 
 		return (m_fd != INVALID_FILE_DESCRIPTOR);
 	}
+
+static std::vector<UartDescriptor> EnumerateUarts();
 
 protected:
 	bool m_networked;

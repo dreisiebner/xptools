@@ -2,7 +2,8 @@ add_library(xptools STATIC
 	Socket.cpp
 	UART.cpp
 	HID.cpp
-	TimeUtil.cpp)
+	TimeUtil.cpp
+	StringUtil.cpp)
 
 if(UNIX)
 	include(CheckStructHasMember)
@@ -30,7 +31,7 @@ endif()
 target_include_directories(xptools SYSTEM PUBLIC ${HIDAPI_INCLUDE_DIRS})
 
 if(WIN32)
-	target_link_libraries(xptools PUBLIC PkgConfig::HIDAPI ws2_32)
+	target_link_libraries(xptools PUBLIC PkgConfig::HIDAPI ws2_32 setupapi)
 else()
 	target_link_libraries(xptools PUBLIC PkgConfig::HIDAPI)
 endif()
